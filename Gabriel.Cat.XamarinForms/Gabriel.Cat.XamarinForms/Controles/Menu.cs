@@ -16,9 +16,13 @@ namespace Gabriel.Cat.XamarinForms
 
         public event EventHandler<LayoutEventArgs<View>> ToSee;
         public event EventHandler Click;
-		public Menu ()
+		public Menu (Layout<View> layoutDefault)
 		{
-            Button btn = new Button();
+            Button btn;
+
+            LayoutDefault = layoutDefault;
+
+            btn = new Button();
             btn.Clicked += ClickMenuButton;
             Content = new StackLayout {
 				Children = {
@@ -43,15 +47,26 @@ namespace Gabriel.Cat.XamarinForms
                     {
                         ToSee(this, new XamarinForms.LayoutEventArgs<View>(Fields));
                     }
-                    else
+                    else 
                     {
                         ToSee(this, new XamarinForms.LayoutEventArgs<View>(layoutDefault));
                     }
+                  
                 }
             }
         }
 
         public UniformGrid Fields { get => fields; set => fields = value==null?new UniformGrid():value; }
+        public Layout<View> LayoutDefault {
+
+            get => layoutDefault;
+            set {
+
+                if (value==null)
+                    throw new NullReferenceException("Se necesita un layout para volver del menú");
+                layoutDefault = value;
+            }
+        }
 
         private void ClickMenuButton(object sender, EventArgs e)
         {
