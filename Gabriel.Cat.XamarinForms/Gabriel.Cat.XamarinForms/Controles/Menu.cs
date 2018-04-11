@@ -1,6 +1,8 @@
 ﻿using AsNum.XFControls;
+using Gabriel.Cat.Extension;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -32,8 +34,9 @@ namespace Gabriel.Cat.XamarinForms
             Fields = new UniformGrid();
             MostrarMenu = false;
             Fields.ColumnDefinitions.Clear();//asi es una lista de un item por fila o deberia
-            
-		}
+            btnMenu.SetImage(Properties.Resources.menu);
+
+        }
         public FileImageSource Image
         {
             get { return btnMenu.Image; }
@@ -86,7 +89,7 @@ namespace Gabriel.Cat.XamarinForms
             Button btn = new Button();
             btn.Text = name;
             btn.Clicked += (s, e) => action.Invoke();
-            Fields.Children.Add(btn);
+            Fields.Children.Add(new ViewBox(btn));
             return btn;
         }
         public Button AddField(string name, Layout<View> toSee)
@@ -94,7 +97,7 @@ namespace Gabriel.Cat.XamarinForms
             Button btn = new Button();
             btn.Text = name;
             btn.Clicked += (s, e) => { if (ToSee != null) ToSee(this, new LayoutEventArgs<View>(toSee));isMenuVisible = false;PonFondo(); };
-            Fields.Children.Add(btn);
+            Fields.Children.Add(new ViewBox(btn));
             return btn;
         }
         public void RemoveField(Button field)

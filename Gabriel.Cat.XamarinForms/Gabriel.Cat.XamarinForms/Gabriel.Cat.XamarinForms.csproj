@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Company>Gabriel.Cat.Developer</Company>
-    <Version>1.0.0-preview</Version>
+    <Version>1.0.1-preview</Version>
     <Copyright>GNU V3</Copyright>
     <PackageLicenseUrl>https://github.com/tetradog/Gabriel.Cat.XamarinForms/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/tetradog/Gabriel.Cat.XamarinForms/</PackageProjectUrl>
@@ -19,6 +19,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Windows.Foundation.UniversalApiContract">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Windows Kits\10\References\10.0.16299.0\Windows.Foundation.UniversalApiContract\5.0.0.0\Windows.Foundation.UniversalApiContract.winmd</HintPath>
+      <IsWinMDFile>true</IsWinMDFile>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Condition=" '$(EnableDefaultCompileItems)' == 'true' " Update="App.xaml.cs">
       <DependentUpon>*.xaml</DependentUpon>
     </Compile>
@@ -30,10 +37,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Extension\" />
   </ItemGroup>
 
   <ItemGroup>
