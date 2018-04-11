@@ -13,20 +13,20 @@ namespace Gabriel.Cat.XamarinForms
         bool isMenuVisible;
         Layout<View> layoutDefault;
         UniformGrid fields;
-
+        Button btnMenu;
         public event EventHandler<LayoutEventArgs<View>> ToSee;
         public event EventHandler Click;
 		public Menu (Layout<View> layoutDefault)
 		{
-            Button btn;
+            
 
             LayoutDefault = layoutDefault;
 
-            btn = new Button();
-            btn.Clicked += ClickMenuButton;
+            btnMenu = new Button();
+            btnMenu.Clicked += ClickMenuButton;
             Content = new StackLayout {
 				Children = {
-					btn
+					btnMenu
 				}
 			};
             Fields = new UniformGrid();
@@ -34,6 +34,11 @@ namespace Gabriel.Cat.XamarinForms
             Fields.ColumnDefinitions.Clear();//asi es una lista de un item por fila o deberia
             
 		}
+        public FileImageSource Image
+        {
+            get { return btnMenu.Image; }
+            set { btnMenu.Image = value; }
+        }
         public bool MostrarMenu {
             get => isMenuVisible;
             set {
