@@ -1,4 +1,4 @@
-﻿using AsNum.XFControls;
+﻿
 using Gabriel.Cat.Extension;
 using System;
 using System.Collections.Generic;
@@ -14,7 +14,7 @@ namespace Gabriel.Cat.XamarinForms
 	{
         bool isMenuVisible;
         Layout<View> layoutDefault;
-        UniformGrid fields;
+        StackLayout fields;
         Button btnMenu;
         public event EventHandler<LayoutEventArgs<View>> ToSee;
         public event EventHandler Click;
@@ -31,9 +31,8 @@ namespace Gabriel.Cat.XamarinForms
 					btnMenu
 				}
 			};
-            Fields = new UniformGrid();
+            Fields = new StackLayout();
             MostrarMenu = false;
-            Fields.ColumnDefinitions.Clear();//asi es una lista de un item por fila o deberia
             btnMenu.SetImage(Properties.Resources.menu);
 
         }
@@ -64,7 +63,7 @@ namespace Gabriel.Cat.XamarinForms
             }
         }
 
-        public UniformGrid Fields { get => fields; set => fields = value==null?new UniformGrid():value; }
+        public StackLayout Fields { get => fields; set => fields = value==null?new StackLayout():value; }
         public Layout<View> LayoutDefault {
 
             get => layoutDefault;
