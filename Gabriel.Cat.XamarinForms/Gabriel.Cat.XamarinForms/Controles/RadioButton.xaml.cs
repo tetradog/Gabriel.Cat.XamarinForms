@@ -106,12 +106,22 @@ namespace Gabriel.Cat.XamarinForms.Controles
         public Color SelectedColor
         {
             get => colorSelected;
-            set => colorSelected = value;
+            set
+            {
+                colorSelected = value;
+                if (!isSelected)
+                    btnOnOff.BackgroundColor = colorSelected;
+            }
         }
         public Color UnSelectedColor
         {
             get => colorUnSelected;
-            set => colorUnSelected = value;
+            set
+            {
+                colorUnSelected = value;
+                if (!isSelected)
+                    btnOnOff.BackgroundColor = colorSelected;
+            }
         }
         public string IdGroup
         {
