@@ -11,6 +11,7 @@ namespace Gabriel.Cat.XamarinForms
 
         public ViewBox(View view = null)
         {
+            
             if(view!=null)
             Content = view;
         }

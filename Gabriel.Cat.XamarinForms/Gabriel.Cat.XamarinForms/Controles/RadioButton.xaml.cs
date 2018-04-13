@@ -48,12 +48,13 @@ namespace Gabriel.Cat.XamarinForms.Controles
         public RadioButton()
         {
             id =genId.Siguiente();
-
+            content = DEFAULTCONTENT;
+            idGroup = DEFAULTGROUP;
+            btnOnOff = new Button();
+            IdGroup = DEFAULTGROUP;
             InitializeComponent();
 
-            content = DEFAULTCONTENT;
-
-            IdGroup = DEFAULTGROUP;
+           
 
             IsSelected = false;
 
@@ -75,8 +76,9 @@ namespace Gabriel.Cat.XamarinForms.Controles
                 {
                     if (Selected != null)
                         Selected(this, new EventArgs());
-                    if (SelectionMode == Selection.Singel)
+                    if (SelectionMode == Selection.Singel&&selectionDic[IdGroup].Count==1)
                     {
+                       
                         selectionDic[IdGroup].GetValueAt(0).IsSelected = false;
                         
                     }
@@ -121,6 +123,9 @@ namespace Gabriel.Cat.XamarinForms.Controles
                 if (value == null)
                     value = DEFAULTGROUP;
 
+                if (!selectionDic.ContainsKey(value))
+                    selectionDic.Add(value, new LlistaOrdenada<int, RadioButton>());
+
                 if (selectionDic[IdGroup].ContainsKey(id))
                     selectionDic[IdGroup].Remove(id);
               
@@ -164,6 +169,7 @@ namespace Gabriel.Cat.XamarinForms.Controles
 
         private void SelectionChanged()
         {
+            
             if (isSelected)
             {
                 btnOnOff.BackgroundColor = SelectedColor;

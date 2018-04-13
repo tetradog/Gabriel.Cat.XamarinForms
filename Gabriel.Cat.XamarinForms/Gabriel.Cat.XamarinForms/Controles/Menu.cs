@@ -10,6 +10,7 @@ using Xamarin.Forms;
 
 namespace Gabriel.Cat.XamarinForms
 {
+   
     public class Menu : ContentView
 	{
         bool isMenuVisible;
@@ -18,6 +19,7 @@ namespace Gabriel.Cat.XamarinForms
         Button btnMenu;
         public event EventHandler<LayoutEventArgs<View>> ToSee;
         public event EventHandler Click;
+
 		public Menu (Layout<View> layoutDefault)
 		{
             
@@ -36,6 +38,7 @@ namespace Gabriel.Cat.XamarinForms
             btnMenu.SetImage(Properties.Resources.menu);
 
         }
+
         public FileImageSource Image
         {
             get { return btnMenu.Image; }
@@ -114,6 +117,7 @@ namespace Gabriel.Cat.XamarinForms
                 BackgroundColor = Color.Transparent;
             }
         }
+     
     }
 
 }
