@@ -4,7 +4,7 @@
              x:Class="Gabriel.Cat.XamarinForms.Controles.RadioButton">
   <ContentView.Content>
         <StackLayout Orientation="Horizontal">
-            <Button x:Name="btnOnOff" WidthRequest="40" HeightRequest="40" BorderRadius="20" Clicked="SeleccionClick"/>
+            <Button x:Name="btnOnOff" WidthRequest="10" HeightRequest="10"  VerticalOptions="Center" Clicked="SeleccionClick"/>
             <Label x:Name="lblRbtn" Text="RadioButton" />
       </StackLayout>
   </ContentView.Content>

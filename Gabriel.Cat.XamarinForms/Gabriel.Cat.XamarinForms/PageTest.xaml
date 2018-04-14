@@ -1,12 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-           
+             xmlns:xf="clr-namespace:Gabriel.Cat.XamarinForms.Controles;assembly=Gabriel.Cat.XamarinForms"
              x:Class="Gabriel.Cat.XamarinForms.PageTest">
     <ContentPage.Content>
-        <StackLayout>
-            <xf:RadioButton Content="Hola RadioButton1"/>
-            <xf:RadioButton Content="Hola RadioButton2"/>
-        </StackLayout>
+        <xf:RadioButton x:Name="rb" IsSelected="True" />
     </ContentPage.Content>
 </ContentPage>

@@ -2,6 +2,7 @@
 using System.Windows;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.WPF.Extensions;
+
 namespace XamarinForms.WpfTest
 {
     /// <summary>
