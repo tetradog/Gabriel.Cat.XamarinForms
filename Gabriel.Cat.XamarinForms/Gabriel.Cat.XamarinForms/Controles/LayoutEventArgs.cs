@@ -2,7 +2,7 @@
 
 using Xamarin.Forms;
 
-namespace Gabriel.Cat.XamarinForms
+namespace Gabriel.Cat.XamarinForms.Controles
 {
     public class LayoutEventArgs<T>:EventArgs where T:View
     {

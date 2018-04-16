@@ -22,9 +22,9 @@ namespace Gabriel.Cat.XamarinForms.Controles
         const string DEFAULTCONTENT = "";
 
         public static readonly BindableProperty IsSelectedProperty = BindableProperty.Create
-         (nameof(IsSelected), typeof(bool), typeof(RadioButton),defaultValue:false,propertyChanged:IsSelectedChangeProperty);
-        public static readonly BindableProperty ContentProperty = BindableProperty.Create
-         (nameof(Content), typeof(object), typeof(RadioButton), defaultValue: DEFAULTCONTENT, propertyChanged: ContentChangeProperty);
+         (nameof(IsSelected), typeof(bool), typeof(RadioButton), defaultValue: false, propertyChanged: IsSelectedChangeProperty);
+        public static readonly BindableProperty TextProperty = BindableProperty.Create
+         (nameof(Text), typeof(object), typeof(RadioButton), defaultValue: DEFAULTCONTENT, propertyChanged: TextChangeProperty);
         public static readonly BindableProperty IdGroupProperty = BindableProperty.Create
         (nameof(IdGroup), typeof(string), typeof(RadioButton), defaultValue: DEFAULTGROUP, propertyChanged: IdGroupChangeProperty);
         public static readonly BindableProperty SelectedColorProperty = BindableProperty.Create
@@ -38,6 +38,7 @@ namespace Gabriel.Cat.XamarinForms.Controles
 
 
         int id;
+        object objText;
         public event EventHandler Selected;
 
         static RadioButton()
@@ -52,6 +53,7 @@ namespace Gabriel.Cat.XamarinForms.Controles
         }
         public RadioButton()
         {
+            objText = DEFAULTCONTENT;
             id = genId.Siguiente();
             InitializeComponent();
             btnOnOff.BackgroundColor = UnselectedColor;
@@ -64,38 +66,17 @@ namespace Gabriel.Cat.XamarinForms.Controles
             get => (bool)GetValue(IsSelectedProperty);
             set
             {
+                SetValue(IsSelectedProperty, value);
 
-                RadioButton aux;
-                if (value)
-                {
-                    if (Selected != null)
-                        Selected(this, new EventArgs());
-                    if (SelectionMode == Selection.Singel && selectionDic[IdGroup].Count == 1)
-                    {
-                        aux = selectionDic[IdGroup].GetValueAt(0);
-                        aux.SetValue(IsSelectedProperty, false);
-                        aux.SelectionChanged();
-                        selectionDic[IdGroup].Remove(aux.id);
-                    }
-                    selectionDic[IdGroup].Add(id, this);
-                }
-                else if (selectionDic[IdGroup].ContainsKey(id))
-                {
-                    if (selectionDic[IdGroup].Count > 1)
-                        selectionDic[IdGroup].Remove(id);
-                }
-
-                SetValue(IsSelectedProperty, selectionDic[IdGroup].ContainsKey(id));
-                SelectionChanged();
             }
         }
-        public new object Content
+        public object Text
         {
-            get => GetValue(ContentProperty);
+            get => GetValue(TextProperty);
             set
             {
-                SetValue(ContentProperty, value != null ? value : DEFAULTCONTENT);
-                lblRbtn.Text = ToString();
+                SetValue(TextProperty, value != null ? value : DEFAULTCONTENT);
+
             }
         }
 
@@ -105,8 +86,6 @@ namespace Gabriel.Cat.XamarinForms.Controles
             set
             {
                 SetValue(SelectedColorProperty, value);
-                if (!IsSelected)
-                    btnOnOff.BackgroundColor = SelectedColor;
             }
         }
         public Color UnselectedColor
@@ -115,8 +94,7 @@ namespace Gabriel.Cat.XamarinForms.Controles
             set
             {
                 SetValue(UnselectedColorProperty, value);
-                if (!IsSelected)
-                    btnOnOff.BackgroundColor = UnselectedColor;
+
             }
         }
         public string IdGroup
@@ -125,21 +103,7 @@ namespace Gabriel.Cat.XamarinForms.Controles
             set
             {
 
-
-                if (value == null)
-                    value = DEFAULTGROUP;
-
-                if (!selectionDic.ContainsKey(value))
-                    selectionDic.Add(value, new LlistaOrdenada<int, RadioButton>());
-
-                if (selectionDic[IdGroup].ContainsKey(id))
-                    selectionDic[IdGroup].Remove(id);
-                SetValue(IdGroupProperty, value);
-                if (!selectionModeDic.ContainsKey(IdGroup))
-                {
-                    selectionModeDic.Add(IdGroup, default(Selection));
-                }
-
+                SetValue(IdGroupProperty, value == null ? DEFAULTGROUP : value);
             }
         }
 
@@ -185,7 +149,7 @@ namespace Gabriel.Cat.XamarinForms.Controles
 
         public override string ToString()
         {
-            return Content.ToString();
+            return objText.ToString();
         }
         public override bool Equals(object obj)
         {
@@ -195,32 +159,58 @@ namespace Gabriel.Cat.XamarinForms.Controles
         {
             bool equals = obj != null;
             if (equals)
-                equals = IdGroup.Equals(obj.IdGroup) && Content.Equals(obj.Content);
+                equals = IdGroup.Equals(obj.IdGroup) && Text.Equals(obj.Text);
             return equals;
         }
         private static void IsSelectedChangeProperty(BindableObject bindable, object oldValue, object newValue)
         {
             RadioButton rb;
+            RadioButton aux;
+            bool value;
             try
             {
                 rb = (RadioButton)bindable;
                 if (oldValue != newValue)
                 {
-                    rb.IsSelected = (bool)newValue;
+                    value = (bool)newValue;
+
+                    if (value)
+                    {
+                        if (rb.Selected != null)
+                            rb.Selected(rb, new EventArgs());
+                        if (rb.SelectionMode == Selection.Singel && selectionDic[rb.IdGroup].Count == 1)
+                        {
+                            aux = selectionDic[rb.IdGroup].GetValueAt(0);
+                            aux.SetValue(IsSelectedProperty, false);
+                            aux.SelectionChanged();
+                            selectionDic[rb.IdGroup].Remove(aux.id);
+                        }
+                        selectionDic[rb.IdGroup].Add(rb.id, rb);
+                    }
+                    else if (selectionDic[rb.IdGroup].ContainsKey(rb.id))
+                    {
+                        if (selectionDic[rb.IdGroup].Count > 1)
+                            selectionDic[rb.IdGroup].Remove(rb.id);
+                    }
+
+
+                    rb.SelectionChanged();
                 }
             }
             catch { }
         }
-        private static void ContentChangeProperty(BindableObject bindable, object oldValue, object newValue)
+        private static void TextChangeProperty(BindableObject bindable, object oldValue, object newValue)
         {
 
             RadioButton rb;
             try
             {
                 rb = (RadioButton)bindable;
-                if (oldValue != newValue)
+                if (!ReferenceEquals(oldValue, newValue))
                 {
-                    rb.Content = newValue;
+                    rb.objText = newValue;
+                    rb.lblRbtn.Text = rb.ToString();
+
                 }
             }
             catch { }
@@ -233,33 +223,48 @@ namespace Gabriel.Cat.XamarinForms.Controles
                 rb = (RadioButton)bindable;
                 if (oldValue != newValue)
                 {
-                    rb.UnselectedColor = (Color)newValue;
+                    if (!rb.IsSelected)
+                        rb.btnOnOff.BackgroundColor = (Color)newValue;
+
                 }
             }
             catch { }
         }
         private static void SelectedColorChangeProperty(BindableObject bindable, object oldValue, object newValue)
         {
-                RadioButton rb;
-                try
+            RadioButton rb;
+            try
+            {
+                rb = (RadioButton)bindable;
+                if (oldValue != newValue)
                 {
-                    rb = (RadioButton)bindable;
-                    if (oldValue != newValue)
-                    {
-                        rb.SelectedColor = (Color)newValue;
-                    }
-               }
-                catch { }
+                    if (rb.IsSelected)
+                        rb.btnOnOff.BackgroundColor = (Color)newValue;
+                }
+            }
+            catch { }
         }
         private static void IdGroupChangeProperty(BindableObject bindable, object oldValue, object newValue)
         {
-                RadioButton rb;
-                try
+            RadioButton rb;
+            string strOld = oldValue.ToString();
+            string strNew = newValue.ToString();
+            try
+            {
+                rb = (RadioButton)bindable;
+                if (oldValue != newValue)
                 {
-                    rb = (RadioButton)bindable;
-                    if (oldValue != newValue)
+
+                    if (!selectionDic.ContainsKey(strNew))
+                        selectionDic.Add(strNew, new LlistaOrdenada<int, RadioButton>());
+                    if (!selectionModeDic.ContainsKey(strNew))
                     {
-                        rb.IdGroup = (string)newValue;
+                        selectionModeDic.Add(strNew, default(Selection));
+                    }
+                    if (selectionDic[strOld].ContainsKey(rb.id))
+                        selectionDic[strOld].Remove(rb.id);
+
+
                 }
             }
             catch { }

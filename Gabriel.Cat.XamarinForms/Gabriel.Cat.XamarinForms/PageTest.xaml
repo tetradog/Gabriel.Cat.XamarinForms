@@ -4,6 +4,9 @@
              xmlns:xf="clr-namespace:Gabriel.Cat.XamarinForms.Controles;assembly=Gabriel.Cat.XamarinForms"
              x:Class="Gabriel.Cat.XamarinForms.PageTest">
     <ContentPage.Content>
-        <xf:RadioButton x:Name="rb" IsSelected="True" />
+        <ScrollView>
+        <StackLayout x:Name="stkMain"/>
+        </ScrollView>
+
     </ContentPage.Content>
 </ContentPage>

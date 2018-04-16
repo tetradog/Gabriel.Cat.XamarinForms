@@ -1,11 +1,21 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <ContentView xmlns="http://xamarin.com/schemas/2014/forms" 
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Gabriel.Cat.XamarinForms.Controles.RadioButton">
+             xmlns:local="clr-namespace:Gabriel.Cat.XamarinForms.Controles"
+             x:Class="Gabriel.Cat.XamarinForms.Controles.RadioButton" >
   <ContentView.Content>
-        <StackLayout Orientation="Horizontal">
-            <Button x:Name="btnOnOff" WidthRequest="10" HeightRequest="10"  VerticalOptions="Center" Clicked="SeleccionClick"/>
-            <Label x:Name="lblRbtn" Text="RadioButton" />
-      </StackLayout>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="15"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="15"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+                <Button x:Name="btnOnOff"  Clicked="SeleccionClick"/>
+           
+            <Label x:Name="lblRbtn" Text="RadioButton" Grid.Column="1" />
+      </Grid>
   </ContentView.Content>
 </ContentView>

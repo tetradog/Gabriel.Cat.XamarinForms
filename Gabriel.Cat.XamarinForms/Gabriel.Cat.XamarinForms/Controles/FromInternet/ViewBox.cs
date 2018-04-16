@@ -1,7 +1,7 @@
 ﻿using System;
 using Xamarin.Forms;
 //sacado de https://forums.xamarin.com/discussion/92662/viewbox-implementation-for-xamarin-forms
-namespace Gabriel.Cat.XamarinForms
+namespace Gabriel.Cat.XamarinForms.Controles
 {
     [ContentProperty(nameof(Content))]
     public class ViewBox : Layout<View>

@@ -8,7 +8,7 @@ using System.Text;
 
 using Xamarin.Forms;
 
-namespace Gabriel.Cat.XamarinForms
+namespace Gabriel.Cat.XamarinForms.Controles
 {
    
     public class Menu : ContentView
@@ -55,11 +55,11 @@ namespace Gabriel.Cat.XamarinForms
                 {
                     if (isMenuVisible)
                     {
-                        ToSee(this, new XamarinForms.LayoutEventArgs<View>(Fields));
+                        ToSee(this, new LayoutEventArgs<View>(Fields));
                     }
                     else 
                     {
-                        ToSee(this, new XamarinForms.LayoutEventArgs<View>(layoutDefault));
+                        ToSee(this, new LayoutEventArgs<View>(layoutDefault));
                     }
                   
                 }
