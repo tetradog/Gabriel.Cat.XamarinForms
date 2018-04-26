@@ -12,16 +12,20 @@ namespace Gabriel.Cat.XamarinForms
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class OptimitzedList : ContentView
     {
-        const int MARGEN = 300;
+        const int MARGEN = 30;
         SortedList<string, List<BindableProperty>> dicPropertiesView;
         SortedList<string, List<View>> dicInterficieView;
         SortedList<string, string> dicDataInterficie;
         SortedList<string, int> dicInterficiesViewsLastIndex;
         SortedList<string, double> dicHeightInterficies;
+        SortedList<string, bool> dicImplementsISlectedItem;
         List<object> data;
         List<double> heightData;
+        List<bool> dataSelected;
         bool working;
         int actualIndex;
+        public event EventHandler<SelectedItemEventArgs> SelectedItem;
+        public event EventHandler<SelectedItemEventArgs> UnSelectedItem;
         public OptimitzedList()
         {
 
@@ -31,10 +35,12 @@ namespace Gabriel.Cat.XamarinForms
             dicPropertiesView = new SortedList<string, List<BindableProperty>>();
             dicInterficiesViewsLastIndex = new SortedList<string, int>();
             dicHeightInterficies = new SortedList<string, double>();
+            dicImplementsISlectedItem = new SortedList<string, bool>();
+            dataSelected = new List<bool>();
             data = new List<object>();
             heightData = new List<double>();
             svMain.Scrolled += SetPosition;
-            SizeChanged += SetSize;
+
             actualIndex = 0;
         }
 
@@ -56,7 +62,7 @@ namespace Gabriel.Cat.XamarinForms
             for (int i = 0; i < heightData.Count && indexFirsItem < 0; i++)
             {
                 posItem += heightData[i];
-                if (posItem >=  e.ScrollY)
+                if (posItem >= e.ScrollY)
                     indexFirsItem = i;
             }
             new Action(() => gAux.RowDefinitions[0].Height = e.ScrollY).BeginInvoke();
@@ -82,7 +88,7 @@ namespace Gabriel.Cat.XamarinForms
                 dicInterficiesViewsLastIndex.Add(interficieDataType.AssemblyQualifiedName, 0);
                 dicInterficieView.Add(interficieDataType.AssemblyQualifiedName, new List<View>());
                 dicPropertiesView.Add(interficieDataType.AssemblyQualifiedName, new List<BindableProperty>());
-
+                dicImplementsISlectedItem.Add(interficieDataType.AssemblyQualifiedName, interficieDataType.ImplementInterficie(typeof(ISelectedItem)));
                 if (heightIsVariable)
                     dicHeightInterficies.Add(interficieDataType.AssemblyQualifiedName, -1);
                 else
@@ -127,6 +133,7 @@ namespace Gabriel.Cat.XamarinForms
                     //obtengo la altura del control con la informacion en cuestion
                     heightData.Add(GetHeight(Type.GetType(dicDataInterficie[tipo.AssemblyQualifiedName]), obj));
                 }
+                dataSelected.Add(false);
             }
         }
         public void Add(IList<object> objs)
@@ -162,6 +169,7 @@ namespace Gabriel.Cat.XamarinForms
             {
                 heightData.RemoveAt(index);
                 data.Remove(index);
+                dataSelected.RemoveAt(index);
             }
         }
         public void Refresh()
@@ -176,7 +184,7 @@ namespace Gabriel.Cat.XamarinForms
         }
         void Clear()
         {
-            Action act = () => stkMain.Children.Clear();
+            Action act = () => { stkMain.Children.Clear(); };
             Device.BeginInvokeOnMainThread(act);
         }
         void Add(View view)
@@ -193,6 +201,7 @@ namespace Gabriel.Cat.XamarinForms
             string type;
             int totalItems = -1;
             double heightActual = 0;
+            ISelectedItem aux;
             working = true;
             if (index < 0)
                 index = 0;
@@ -204,7 +213,7 @@ namespace Gabriel.Cat.XamarinForms
             for (int i = 0; i < data.Count && totalItems < 0; i++)
             {
                 heightActual += heightData[i];
-                if (heightActual  >= Height)
+                if (heightActual > Height + MARGEN)
                     totalItems = i;
             }
             if (totalItems < 0)
@@ -227,12 +236,26 @@ namespace Gabriel.Cat.XamarinForms
                 if (dicInterficiesViewsLastIndex[typeInterficie] > views.Count)
                 {
                     for (int i = 0; dicInterficiesViewsLastIndex[typeInterficie] > views.Count; i++)
+                    {
                         views.Add((View)Activator.CreateInstance(Type.GetType(typeInterficie)));
+                        if (dicImplementsISlectedItem[typeInterficie])
+                        {
+                            aux = ((ISelectedItem)views[views.Count - 1]);
+                            aux.SelectedItem += SelectedItemEvent;
+                            aux.UnSelectedItem += UnSelectedItemEvent;
+                        }
+                    }
                 }
                 else
                 {
                     for (int i = dicInterficiesViewsLastIndex[typeInterficie], f = views.Count; i < f; i++)
                     {
+                        if (dicImplementsISlectedItem[typeInterficie])
+                        {
+                            aux = ((ISelectedItem)views[views.Count - 1]);
+                            aux.SelectedItem -= SelectedItemEvent;
+                            aux.UnSelectedItem -= UnSelectedItemEvent;
+                        }
                         views.RemoveAt(views.Count - 1);
                     }
                 }
@@ -247,8 +270,24 @@ namespace Gabriel.Cat.XamarinForms
             working = false;
         }
 
+        private void UnSelectedItemEvent(object sender, SelectedItemEventArgs e)
+        {
+
+            Selection(UnSelectedItem, false, e);
+        }
 
 
+
+        private void SelectedItemEvent(object sender, SelectedItemEventArgs e)
+        {
+            Selection(SelectedItem, true, e);
+        }
+        private void Selection(EventHandler<SelectedItemEventArgs> evento, bool value, SelectedItemEventArgs e)
+        {
+            if (evento != null)
+                evento(this, e);
+            dataSelected[data.IndexOf(e.Item)] = value;
+        }
         View SetData(object data)
         {
             string typeInterficie = dicDataInterficie[data.GetType().AssemblyQualifiedName];
@@ -260,14 +299,23 @@ namespace Gabriel.Cat.XamarinForms
             SetViewData(view, data);
             return view;
         }
-        void SetViewData(View view, object data)
+        void SetViewData(View view, object objData)
         {
-            string inteficieType = dicDataInterficie[data.GetType().AssemblyQualifiedName];
+            string inteficieType = dicDataInterficie[objData.GetType().AssemblyQualifiedName];
             List<BindableProperty> propertiesView = dicPropertiesView[inteficieType];
+            ISelectedItem selectedItem;
             for (int i = 0; i < propertiesView.Count; i++)
             {
-                view.SetValue(propertiesView[i], data.GetProperty(propertiesView[i].PropertyName));
+                view.SetValue(propertiesView[i], objData.GetProperty(propertiesView[i].PropertyName));
             }
+            if (dicImplementsISlectedItem[view.GetType().AssemblyQualifiedName]&&data.Count>0)
+            {
+                selectedItem = ((ISelectedItem)view);
+                selectedItem.Item = objData;
+                selectedItem.IsSelected = dataSelected[this.data.IndexOf(objData)];
+            }
+
         }
     }
+
 }
