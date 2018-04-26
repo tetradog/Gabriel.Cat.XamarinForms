@@ -8,7 +8,13 @@ namespace Gabriel.Cat.XamarinForms
     {
         event EventHandler<SelectedItemEventArgs> SelectedItem;
         event EventHandler<SelectedItemEventArgs> UnSelectedItem;
+        /// <summary>
+        /// Mustn't change UI
+        /// </summary>
         object Item { get; set; }
+        /// <summary>
+        /// Change the UI selection mode mustn't raise Selection event
+        /// </summary>
         bool IsSelected { get; set; }
     }
     public class SelectedItemEventArgs : EventArgs
