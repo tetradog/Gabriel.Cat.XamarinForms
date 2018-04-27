@@ -6,8 +6,6 @@ namespace Gabriel.Cat.XamarinForms
 {
     public interface ISelectedItem
     {
-        event EventHandler<SelectedItemEventArgs> SelectedItem;
-        event EventHandler<SelectedItemEventArgs> UnSelectedItem;
         /// <summary>
         /// Mustn't change UI
         /// </summary>

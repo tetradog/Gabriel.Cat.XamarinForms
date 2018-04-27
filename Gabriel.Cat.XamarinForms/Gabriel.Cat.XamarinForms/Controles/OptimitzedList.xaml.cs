@@ -13,6 +13,10 @@ namespace Gabriel.Cat.XamarinForms
     public partial class OptimitzedList : ContentView
     {
         const int MARGEN = 30;
+        public static readonly OptimitzedList StaticTypeDefinition = new OptimitzedList();
+        public static Color SelectedColor = Color.LightBlue;
+        public static Color UnSelectedColor = Color.Transparent;
+
         SortedList<string, List<BindableProperty>> dicPropertiesView;
         SortedList<string, List<View>> dicInterficieView;
         SortedList<string, string> dicDataInterficie;
@@ -24,8 +28,10 @@ namespace Gabriel.Cat.XamarinForms
         List<bool> dataSelected;
         bool working;
         int actualIndex;
+        TapGestureRecognizer tapView;
         public event EventHandler<SelectedItemEventArgs> SelectedItem;
         public event EventHandler<SelectedItemEventArgs> UnSelectedItem;
+
         public OptimitzedList()
         {
 
@@ -42,6 +48,34 @@ namespace Gabriel.Cat.XamarinForms
             svMain.Scrolled += SetPosition;
 
             actualIndex = 0;
+            tapView = new TapGestureRecognizer();
+            tapView.Tapped += (s, e) => {
+                ISelectedItem selectedItem = s as ISelectedItem;
+                View view = s as View;
+                int indexObj = actualIndex + stkMain.Children.IndexOf(view);
+                if (selectedItem != null)
+                    selectedItem.IsSelected = !selectedItem.IsSelected;
+                else
+                {
+                    if (!dataSelected[indexObj])
+                    {
+                        view.BackgroundColor = SelectedColor;
+                    }
+                    else
+                    {
+                        view.BackgroundColor = UnSelectedColor;
+                    }
+                }
+
+                if (!dataSelected[indexObj])
+                {
+                    SelectedItemEvent(data[indexObj]);
+                }
+                else
+                {
+                    UnSelectedItemEvent(data[indexObj]);
+                }
+            };
         }
 
         private void SetSize(object sender, EventArgs e)
@@ -70,6 +104,13 @@ namespace Gabriel.Cat.XamarinForms
                 SetFirstItemIndex(indexFirsItem);
 
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dataObjectType"></param>
+        /// <param name="interficieDataType">si implementa ISelectedItem cuando hagan Tap  IsSelected=!IsSelected</param>
+        /// <param name="heightIsVariable"></param>
+        /// <param name="propertiesInterficie"></param>
         public void AddType(Type dataObjectType, Type interficieDataType, bool heightIsVariable, params BindableProperty[] propertiesInterficie)
         {
             if (!interficieDataType.IsSubclassOf(typeof(View)))
@@ -119,30 +160,43 @@ namespace Gabriel.Cat.XamarinForms
         /// <param name="obj"></param>
         public void Add(object obj)
         {
+            OptimitzedList list;
             Type tipo;
             if (obj != null)
             {
-                if (!dicDataInterficie.ContainsKey(obj.GetType().AssemblyQualifiedName))
-                    throw new ArgumentException("the object doesn't have a type added");
                 tipo = obj.GetType();
+                if (!dicDataInterficie.ContainsKey(tipo.AssemblyQualifiedName)&&!StaticTypeDefinition.dicDataInterficie.ContainsKey(tipo.AssemblyQualifiedName))
+                    throw new ArgumentException("the object doesn't have a type added");
+                
                 data.Add(obj);
-                if (dicHeightInterficies[dicDataInterficie[tipo.AssemblyQualifiedName]] > 0)
-                    heightData.Add(dicHeightInterficies[dicDataInterficie[tipo.AssemblyQualifiedName]]);
-                else
+                if (dicDataInterficie.ContainsKey(tipo.AssemblyQualifiedName))
                 {
-                    //obtengo la altura del control con la informacion en cuestion
-                    heightData.Add(GetHeight(Type.GetType(dicDataInterficie[tipo.AssemblyQualifiedName]), obj));
+                    list = this;
                 }
+                else list = StaticTypeDefinition;
+
+                    if (list.dicHeightInterficies[list.dicDataInterficie[tipo.AssemblyQualifiedName]] > 0)
+                        heightData.Add(list.dicHeightInterficies[list.dicDataInterficie[tipo.AssemblyQualifiedName]]);
+                    else
+                    {
+                        //obtengo la altura del control con la informacion en cuestion
+                        heightData.Add(list.GetHeight(Type.GetType(list.dicDataInterficie[tipo.AssemblyQualifiedName]), obj));
+                    }
+            
                 dataSelected.Add(false);
             }
         }
         public void Add(IList<object> objs)
         {
+            Type type;
             if (objs != null)
             {
                 for (int i = 0; i < objs.Count; i++)
-                    if (!dicDataInterficie.ContainsKey(objs[i].GetType().AssemblyQualifiedName))
+                {
+                    type = objs[i].GetType();
+                    if (!dicDataInterficie.ContainsKey(type.AssemblyQualifiedName) && !StaticTypeDefinition.dicDataInterficie.ContainsKey(type.AssemblyQualifiedName))
                         throw new ArgumentException(string.Format("the object at {0} doesn't have a type added", i));
+                }
 
                 for (int i = 0; i < objs.Count; i++)
                     Add(objs[i]);
@@ -194,6 +248,36 @@ namespace Gabriel.Cat.XamarinForms
         }
         void SetFirstItemIndex(int index)
         {
+            try
+            {
+                working = true;
+                SetChangesOnIUToData();
+                ISetFirstItemIndex(index);
+            }
+            finally
+            {
+                working = false;
+            }
+        }
+        /// <summary>
+        /// Set changes on UI to objects data
+        /// </summary>
+        public void SetChangesOnIUToData()
+        {
+            for (int i = 0, j = actualIndex; i < stkMain.Children.Count; i++, j++)
+                SetDataView(data[j], stkMain.Children[i]);
+        }
+
+        private void SetDataView(object data, View view)
+        {
+            Type type = view.GetType();
+            List<BindableProperty> properties = dicPropertiesView.ContainsKey(type.AssemblyQualifiedName)? dicPropertiesView[type.AssemblyQualifiedName]: StaticTypeDefinition.dicPropertiesView[type.AssemblyQualifiedName];
+            for (int i = 0; i < properties.Count; i++)
+                data.SetProperty(properties[i].PropertyName, view.GetProperty(properties[i].PropertyName));
+        }
+
+        void ISetFirstItemIndex(int index)
+        {
             string typeInterficie;
             List<View> views;
             SortedList<string, string> dicTypes = new SortedList<string, string>();
@@ -201,8 +285,7 @@ namespace Gabriel.Cat.XamarinForms
             string type;
             int totalItems = -1;
             double heightActual = 0;
-            ISelectedItem aux;
-            working = true;
+            bool implementedAux;
             if (index < 0)
                 index = 0;
             else if (index >= data.Count)
@@ -220,10 +303,14 @@ namespace Gabriel.Cat.XamarinForms
                 totalItems = data.Count;
             for (int j = index, fJ = j + totalItems; j < fJ; j++)
             {
-                type = dicDataInterficie[data[j].GetType().AssemblyQualifiedName];
+                type = dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName]:StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName];
                 if (!dicTypes.ContainsKey(type))
                 {
                     dicTypes.Add(type, type);
+                    if (!dicInterficiesViewsLastIndex.ContainsKey(type))
+                        dicInterficiesViewsLastIndex.Add(type, 0);
+                    if (!dicInterficieView.ContainsKey(type))
+                        dicInterficieView.Add(type, new List<View>());
                     dicInterficiesViewsLastIndex[type] = 1;
                 }
                 else dicInterficiesViewsLastIndex[type]++;
@@ -232,30 +319,25 @@ namespace Gabriel.Cat.XamarinForms
             for (int j = 0; j < types.Length; j++)
             {
                 typeInterficie = types[j];
+              
                 views = dicInterficieView[typeInterficie];
+                implementedAux = dicImplementsISlectedItem.ContainsKey(typeInterficie) ? dicImplementsISlectedItem[typeInterficie] : StaticTypeDefinition.dicImplementsISlectedItem[typeInterficie];
+
                 if (dicInterficiesViewsLastIndex[typeInterficie] > views.Count)
                 {
-                    for (int i = 0; dicInterficiesViewsLastIndex[typeInterficie] > views.Count; i++)
+                     for (int i = 0; dicInterficiesViewsLastIndex[typeInterficie] > views.Count; i++)
                     {
                         views.Add((View)Activator.CreateInstance(Type.GetType(typeInterficie)));
-                        if (dicImplementsISlectedItem[typeInterficie])
-                        {
-                            aux = ((ISelectedItem)views[views.Count - 1]);
-                            aux.SelectedItem += SelectedItemEvent;
-                            aux.UnSelectedItem += UnSelectedItemEvent;
-                        }
+                        views[views.Count - 1].GestureRecognizers.Add(tapView);
+                       
                     }
                 }
                 else
                 {
                     for (int i = dicInterficiesViewsLastIndex[typeInterficie], f = views.Count; i < f; i++)
                     {
-                        if (dicImplementsISlectedItem[typeInterficie])
-                        {
-                            aux = ((ISelectedItem)views[views.Count - 1]);
-                            aux.SelectedItem -= SelectedItemEvent;
-                            aux.UnSelectedItem -= UnSelectedItemEvent;
-                        }
+                        
+                        views[views.Count - 1].GestureRecognizers.Remove(tapView);
                         views.RemoveAt(views.Count - 1);
                     }
                 }
@@ -265,32 +347,29 @@ namespace Gabriel.Cat.XamarinForms
             for (int j = index, fJ = j + totalItems; j < fJ; j++)
             {
                 Add(SetData(data[j]));
-                dicInterficiesViewsLastIndex[dicDataInterficie[data[j].GetType().AssemblyQualifiedName]]++;
+                dicInterficiesViewsLastIndex[dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName]:StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName]]++;
             }
-            working = false;
+          
         }
 
-        private void UnSelectedItemEvent(object sender, SelectedItemEventArgs e)
+        private void UnSelectedItemEvent(object item)
         {
-
-            Selection(UnSelectedItem, false, e);
+            Selection(UnSelectedItem, false, item);
         }
-
-
-
-        private void SelectedItemEvent(object sender, SelectedItemEventArgs e)
+        private void SelectedItemEvent(object  item)
         {
-            Selection(SelectedItem, true, e);
+            Selection(SelectedItem, true,item);
         }
-        private void Selection(EventHandler<SelectedItemEventArgs> evento, bool value, SelectedItemEventArgs e)
+        private void Selection(EventHandler<SelectedItemEventArgs> evento, bool value, object item)
         {
             if (evento != null)
-                evento(this, e);
-            dataSelected[data.IndexOf(e.Item)] = value;
+                evento(this,new SelectedItemEventArgs( item));
+            dataSelected[data.IndexOf(item)] = value;
         }
         View SetData(object data)
         {
-            string typeInterficie = dicDataInterficie[data.GetType().AssemblyQualifiedName];
+            Type type=data.GetType();
+            string typeInterficie = dicDataInterficie.ContainsKey(type.AssemblyQualifiedName)? dicDataInterficie[type.AssemblyQualifiedName]: StaticTypeDefinition.dicDataInterficie[type.AssemblyQualifiedName];
             List<View> views = dicInterficieView[typeInterficie];
             View view;
 
@@ -301,17 +380,19 @@ namespace Gabriel.Cat.XamarinForms
         }
         void SetViewData(View view, object objData)
         {
-            string inteficieType = dicDataInterficie[objData.GetType().AssemblyQualifiedName];
-            List<BindableProperty> propertiesView = dicPropertiesView[inteficieType];
+            Type typeObj = objData.GetType();
+            Type typeView = view.GetType();
+            string typeInterficie = dicDataInterficie.ContainsKey(typeObj.AssemblyQualifiedName) ? dicDataInterficie[typeObj.AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[typeObj.AssemblyQualifiedName];
+            List<BindableProperty> propertiesView = dicPropertiesView.ContainsKey(typeObj.AssemblyQualifiedName) ? dicPropertiesView[typeInterficie]: StaticTypeDefinition.dicPropertiesView[typeInterficie];
             ISelectedItem selectedItem;
             for (int i = 0; i < propertiesView.Count; i++)
             {
                 view.SetValue(propertiesView[i], objData.GetProperty(propertiesView[i].PropertyName));
             }
-            if (dicImplementsISlectedItem[view.GetType().AssemblyQualifiedName]&&data.Count>0)
+            if ((dicImplementsISlectedItem.ContainsKey(typeView.AssemblyQualifiedName) ? dicImplementsISlectedItem[typeView.AssemblyQualifiedName]:StaticTypeDefinition.dicImplementsISlectedItem[typeView.AssemblyQualifiedName]) &&data.Count>0)
             {
                 selectedItem = ((ISelectedItem)view);
-                selectedItem.Item = objData;
+                selectedItem.Item = objData;//lo pongo por si el programador quiere saber que item tiene el control
                 selectedItem.IsSelected = dataSelected[this.data.IndexOf(objData)];
             }
 
