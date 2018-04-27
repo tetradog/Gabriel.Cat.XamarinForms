@@ -248,17 +248,112 @@ namespace Gabriel.Cat.XamarinForms
         }
         void SetFirstItemIndex(int index)
         {
+            int totalItems;
             try
             {
                 working = true;
                 SetChangesOnIUToData();
-                ISetFirstItemIndex(index);
+                totalItems = GetTotalItems();
+                if (Math.Abs(index-actualIndex)>=totalItems)
+                    PonerTodosLosItems(index,totalItems);
+                else
+                {
+                    if(index-actualIndex<0)
+                    {
+                        //va hacia atrás
+                        PonItemsPorArriba(actualIndex - index);
+                    }
+                    else
+                    {
+                        //va hacia adelante
+                        PonItemsPorAbajo(index-actualIndex);
+                    }
+                }
             }
             finally
             {
                 working = false;
             }
         }
+        //hay problemas al poner los controles que faltan en las listas...estaria bien evitar al maximo la duplicacion de codigo
+        private void PonItemsPorArriba(int numAPoner)
+        {
+            string interficieType;
+            IList<View> views;
+            Type typeInterficie;
+            View view;
+            for(int i=actualIndex,f=i-numAPoner;f<=i;i--)
+            {
+                interficieType = dicDataInterficie.ContainsKey(data[i].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[i].GetType().AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[data[i].GetType().AssemblyQualifiedName];
+                if (!dicInterficieView.ContainsKey(interficieType))
+                    dicInterficieView.Add(interficieType, new List<View>());
+                if (!this.dicInterficiesViewsLastIndex.ContainsKey(interficieType))
+                    this.dicInterficiesViewsLastIndex.Add(interficieType, 0);
+                views = dicInterficieView[interficieType]; 
+                if(views.Count<this.dicInterficiesViewsLastIndex[interficieType])
+                {
+                    typeInterficie = Type.GetType(interficieType);
+                    for(int j=0,jF=this.dicInterficiesViewsLastIndex[interficieType]-views.Count;j<jF;j++)
+                    {
+                        views.Add((View)Activator.CreateInstance(typeInterficie));
+                    }
+                }
+            }
+            for(int i=0,j=actualIndex+stkMain.Children.Count;i<numAPoner;i++,j++)
+            {
+                if (stkMain.Children.Count > numAPoner)
+                {
+                    dicInterficiesViewsLastIndex[stkMain.Children[0].GetType().AssemblyQualifiedName]--;
+                    //saco el ultimo
+                    stkMain.Children.RemoveAt(0);
+                }
+                //pongo el primero
+                view = dicInterficieView[dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName]][dicInterficiesViewsLastIndex[StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName]]];
+                SetViewData(view, data[j]);
+                stkMain.Children.Insert(stkMain.Children.Count - 1, view);
+                dicInterficiesViewsLastIndex[view.GetType().AssemblyQualifiedName]++;
+            }
+        }
+
+        private void PonItemsPorAbajo(int numAPoner)
+        {
+            string interficieType;
+            IList<View> views;
+            Type typeInterficie;
+            View view;
+            for (int i = actualIndex, f = i + numAPoner; i<f; i++)
+            {
+                interficieType = dicDataInterficie.ContainsKey(data[i].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[i].GetType().AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[data[i].GetType().AssemblyQualifiedName];
+                if (!dicInterficieView.ContainsKey(interficieType))
+                    dicInterficieView.Add(interficieType, new List<View>());
+                if (!this.dicInterficiesViewsLastIndex.ContainsKey(interficieType))
+                    this.dicInterficiesViewsLastIndex.Add(interficieType, 0);
+                views = dicInterficieView[interficieType];
+                if (views.Count < this.dicInterficiesViewsLastIndex[interficieType])
+                {
+                    typeInterficie = Type.GetType(interficieType);
+                    for (int j = 0, jF = this.dicInterficiesViewsLastIndex[interficieType] - views.Count; j < jF; j++)
+                    {
+                        views.Add((View)Activator.CreateInstance(typeInterficie));
+                    }
+                }
+            }
+            for (int i = 0, j = actualIndex; i < numAPoner; i++, j--)
+            {
+                if (stkMain.Children.Count > numAPoner)
+                {
+                    dicInterficiesViewsLastIndex[stkMain.Children[stkMain.Children.Count - 1].GetType().AssemblyQualifiedName]--;
+                    //saco el ultimo
+                    stkMain.Children.RemoveAt(stkMain.Children.Count - 1);
+                }
+                //pongo el primero
+                view = dicInterficieView[dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName]][dicInterficiesViewsLastIndex[StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName]]];
+                SetViewData(view, data[j]);
+                stkMain.Children.Insert(0, view);
+                dicInterficiesViewsLastIndex[view.GetType().AssemblyQualifiedName]++;
+            }
+        }
+
         /// <summary>
         /// Set changes on UI to objects data
         /// </summary>
@@ -276,14 +371,13 @@ namespace Gabriel.Cat.XamarinForms
                 data.SetProperty(properties[i].PropertyName, view.GetProperty(properties[i].PropertyName));
         }
 
-        void ISetFirstItemIndex(int index)
-        {
+        void PonerTodosLosItems(int index,int totalItems)
+        {//va a patadas...mirar de hacer que sea mas fluido el scroll y el poner el scroll en una posicion nueva...se podria usar este metodo para ir a un punto en concreto y para mover el scroll usar otro que vaya paso a paso...por mirar...
             string typeInterficie;
             List<View> views;
             SortedList<string, string> dicTypes = new SortedList<string, string>();
             string[] types;
             string type;
-            int totalItems = -1;
             double heightActual = 0;
             bool implementedAux;
             if (index < 0)
@@ -293,17 +387,12 @@ namespace Gabriel.Cat.XamarinForms
 
             actualIndex = index;
             Clear();
-            for (int i = 0; i < data.Count && totalItems < 0; i++)
-            {
-                heightActual += heightData[i];
-                if (heightActual > Height + MARGEN)
-                    totalItems = i;
-            }
+            
             if (totalItems < 0)
                 totalItems = data.Count;
             for (int j = index, fJ = j + totalItems; j < fJ; j++)
             {
-                type = dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName]:StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName];
+                type = dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName];
                 if (!dicTypes.ContainsKey(type))
                 {
                     dicTypes.Add(type, type);
@@ -319,24 +408,24 @@ namespace Gabriel.Cat.XamarinForms
             for (int j = 0; j < types.Length; j++)
             {
                 typeInterficie = types[j];
-              
+
                 views = dicInterficieView[typeInterficie];
                 implementedAux = dicImplementsISlectedItem.ContainsKey(typeInterficie) ? dicImplementsISlectedItem[typeInterficie] : StaticTypeDefinition.dicImplementsISlectedItem[typeInterficie];
 
                 if (dicInterficiesViewsLastIndex[typeInterficie] > views.Count)
                 {
-                     for (int i = 0; dicInterficiesViewsLastIndex[typeInterficie] > views.Count; i++)
+                    for (int i = 0; dicInterficiesViewsLastIndex[typeInterficie] > views.Count; i++)
                     {
                         views.Add((View)Activator.CreateInstance(Type.GetType(typeInterficie)));
                         views[views.Count - 1].GestureRecognizers.Add(tapView);
-                       
+
                     }
                 }
                 else
                 {
                     for (int i = dicInterficiesViewsLastIndex[typeInterficie], f = views.Count; i < f; i++)
                     {
-                        
+
                         views[views.Count - 1].GestureRecognizers.Remove(tapView);
                         views.RemoveAt(views.Count - 1);
                     }
@@ -347,9 +436,22 @@ namespace Gabriel.Cat.XamarinForms
             for (int j = index, fJ = j + totalItems; j < fJ; j++)
             {
                 Add(SetData(data[j]));
-                dicInterficiesViewsLastIndex[dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName]:StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName]]++;
+                dicInterficiesViewsLastIndex[dicDataInterficie.ContainsKey(data[j].GetType().AssemblyQualifiedName) ? dicDataInterficie[data[j].GetType().AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[data[j].GetType().AssemblyQualifiedName]]++;
             }
-          
+
+        }
+
+        private int GetTotalItems()
+        {
+            int totalItems = -1;
+            double heightActual = 0;
+            for (int i = 0; i < data.Count && totalItems < 0; i++)
+            {
+                heightActual += heightData[i];
+                if (heightActual > Height + MARGEN)
+                    totalItems = i;
+            }
+            return totalItems;
         }
 
         private void UnSelectedItemEvent(object item)
