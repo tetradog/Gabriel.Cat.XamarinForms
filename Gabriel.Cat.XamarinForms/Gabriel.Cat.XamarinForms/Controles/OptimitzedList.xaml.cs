@@ -17,7 +17,7 @@ namespace Gabriel.Cat.XamarinForms
         public static Color SelectedColor = Color.LightBlue;
         public static Color UnSelectedColor = Color.Transparent;
 
-        SortedList<string, List<BindableProperty>> dicPropertiesView;
+        SortedList<string, List<KeyValuePair<string,string>>> dicPropertiesView;
         SortedList<string, List<View>> dicInterficieView;
         SortedList<string, string> dicDataInterficie;
         SortedList<string, int> dicInterficiesViewsLastIndex;
@@ -38,7 +38,7 @@ namespace Gabriel.Cat.XamarinForms
             InitializeComponent();
             dicDataInterficie = new SortedList<string, string>();
             dicInterficieView = new SortedList<string, List<View>>();
-            dicPropertiesView = new SortedList<string, List<BindableProperty>>();
+            dicPropertiesView = new SortedList<string, List<KeyValuePair<string, string>>>();
             dicInterficiesViewsLastIndex = new SortedList<string, int>();
             dicHeightInterficies = new SortedList<string, double>();
             dicImplementsISlectedItem = new SortedList<string, bool>();
@@ -104,23 +104,37 @@ namespace Gabriel.Cat.XamarinForms
                 SetFirstItemIndex(indexFirsItem);
 
         }
+        public void AddType(Type dataObjectType, Type interficieDataType, bool heightIsVariable, params BindableProperty[] propertiesInterficie)
+        { 
+            KeyValuePair<string, string>[] propertiesName = new KeyValuePair<string, string>[propertiesInterficie.Length];
+            for (int i = 0; i < propertiesName.Length; i++)
+                propertiesName[i] = new KeyValuePair<string, string>(propertiesInterficie[i].PropertyName,propertiesInterficie[i].PropertyName);
+            AddType(dataObjectType, interficieDataType, heightIsVariable, propertiesName);
+        }
+        public void AddType(Type dataObjectType, Type interficieDataType, bool heightIsVariable, params string[] namesProperties)
+        {
+            KeyValuePair<string, string>[] propertiesName = new KeyValuePair<string, string>[namesProperties.Length];
+            for (int i = 0; i < propertiesName.Length; i++)
+                propertiesName[i] = new KeyValuePair<string, string>(namesProperties[i], namesProperties[i]);
+            AddType(dataObjectType, interficieDataType, heightIsVariable, propertiesName);
+        }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="dataObjectType"></param>
-        /// <param name="interficieDataType">si implementa ISelectedItem cuando hagan Tap  IsSelected=!IsSelected</param>
+        /// <param name="interficieDataType">si implementa ISelectedItem cuando hagan Tap  IsSelected=!IsSelected y el Item será el objeto que represente el control</param>
         /// <param name="heightIsVariable"></param>
-        /// <param name="propertiesInterficie"></param>
-        public void AddType(Type dataObjectType, Type interficieDataType, bool heightIsVariable, params BindableProperty[] propertiesInterficie)
+        /// <param name="propertiesInterficie">Key=InterficiePropertieName,Value=DataPropertieName</param>
+        public void AddType(Type dataObjectType, Type interficieDataType, bool heightIsVariable, params KeyValuePair<string, string>[] propertiesInterficie)
         {
             if (!interficieDataType.IsSubclassOf(typeof(View)))
                 throw new ArgumentException(string.Format("the {0} most inhert from {1}", interficieDataType.AssemblyQualifiedName, nameof(View)));
             for (int i = 0; i < propertiesInterficie.Length; i++)
             {
-                if (dataObjectType.GetProperty(propertiesInterficie[i].PropertyName) == null)
-                    throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {3}", propertiesInterficie[i].PropertyName, i, dataObjectType.AssemblyQualifiedName));
-                if (interficieDataType.GetProperty(propertiesInterficie[i].PropertyName) == null)
-                    throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {3}", propertiesInterficie[i].PropertyName, i, interficieDataType.AssemblyQualifiedName));
+                if (dataObjectType.GetProperty(propertiesInterficie[i].Value) == null)
+                    throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {3}", propertiesInterficie[i].Value, i, dataObjectType.AssemblyQualifiedName));
+                if (interficieDataType.GetProperty(propertiesInterficie[i].Key) == null)
+                    throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {3}", propertiesInterficie[i].Key, i, interficieDataType.AssemblyQualifiedName));
 
             }
             if (!dicDataInterficie.ContainsKey(dataObjectType.AssemblyQualifiedName))
@@ -128,7 +142,7 @@ namespace Gabriel.Cat.XamarinForms
                 dicDataInterficie.Add(dataObjectType.AssemblyQualifiedName, interficieDataType.AssemblyQualifiedName);
                 dicInterficiesViewsLastIndex.Add(interficieDataType.AssemblyQualifiedName, 0);
                 dicInterficieView.Add(interficieDataType.AssemblyQualifiedName, new List<View>());
-                dicPropertiesView.Add(interficieDataType.AssemblyQualifiedName, new List<BindableProperty>());
+                dicPropertiesView.Add(interficieDataType.AssemblyQualifiedName, new List<KeyValuePair<string, string>>());
                 dicImplementsISlectedItem.Add(interficieDataType.AssemblyQualifiedName, interficieDataType.ImplementInterficie(typeof(ISelectedItem)));
                 if (heightIsVariable)
                     dicHeightInterficies.Add(interficieDataType.AssemblyQualifiedName, -1);
@@ -366,9 +380,9 @@ namespace Gabriel.Cat.XamarinForms
         private void SetDataView(object data, View view)
         {
             Type type = view.GetType();
-            List<BindableProperty> properties = dicPropertiesView.ContainsKey(type.AssemblyQualifiedName)? dicPropertiesView[type.AssemblyQualifiedName]: StaticTypeDefinition.dicPropertiesView[type.AssemblyQualifiedName];
+            List<KeyValuePair<string, string>> properties = dicPropertiesView.ContainsKey(type.AssemblyQualifiedName)? dicPropertiesView[type.AssemblyQualifiedName]: StaticTypeDefinition.dicPropertiesView[type.AssemblyQualifiedName];
             for (int i = 0; i < properties.Count; i++)
-                data.SetProperty(properties[i].PropertyName, view.GetProperty(properties[i].PropertyName));
+                data.SetProperty(properties[i].Value, view.GetProperty(properties[i].Key));
         }
 
         void PonerTodosLosItems(int index,int totalItems)
@@ -485,11 +499,11 @@ namespace Gabriel.Cat.XamarinForms
             Type typeObj = objData.GetType();
             Type typeView = view.GetType();
             string typeInterficie = dicDataInterficie.ContainsKey(typeObj.AssemblyQualifiedName) ? dicDataInterficie[typeObj.AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[typeObj.AssemblyQualifiedName];
-            List<BindableProperty> propertiesView = dicPropertiesView.ContainsKey(typeObj.AssemblyQualifiedName) ? dicPropertiesView[typeInterficie]: StaticTypeDefinition.dicPropertiesView[typeInterficie];
+            List<KeyValuePair<string, string>> propertiesView = dicPropertiesView.ContainsKey(typeObj.AssemblyQualifiedName) ? dicPropertiesView[typeInterficie]: StaticTypeDefinition.dicPropertiesView[typeInterficie];
             ISelectedItem selectedItem;
             for (int i = 0; i < propertiesView.Count; i++)
             {
-                view.SetValue(propertiesView[i], objData.GetProperty(propertiesView[i].PropertyName));
+                view.SetProperty(propertiesView[i].Key, objData.GetProperty(propertiesView[i].Value));
             }
             if ((dicImplementsISlectedItem.ContainsKey(typeView.AssemblyQualifiedName) ? dicImplementsISlectedItem[typeView.AssemblyQualifiedName]:StaticTypeDefinition.dicImplementsISlectedItem[typeView.AssemblyQualifiedName]) &&data.Count>0)
             {
