@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Gabriel.Cat.S.Utilitats;
-using Windows.UI.Xaml;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Company>Gabriel.Cat.Developer</Company>
-    <Version>1.0.2-preview1.0.7</Version>
+    <Version>1.0.2-preview1.0.8</Version>
     <Copyright>GNU V3</Copyright>
     <PackageLicenseUrl>https://github.com/tetradog/Gabriel.Cat.XamarinForms/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/tetradog/Gabriel.Cat.XamarinForms/</PackageProjectUrl>
@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Gabriel.Cat.S.Utilitats" Version="1.0.4.3-preview1.0.1" />
-    <PackageReference Include="Xamarin.Forms" Version="3.0.0.427558-pre4" />
+    <PackageReference Include="Xamarin.Forms" Version="3.4.0.1008975" />
   </ItemGroup>
 
   <ItemGroup>
