@@ -23,6 +23,8 @@ namespace Gabriel.Cat.XamarinForms
         SortedList<string, int> dicInterficiesViewsLastIndex;
         SortedList<string, double> dicHeightInterficies;
         SortedList<string, bool> dicImplementsISlectedItem;
+        SortedList<string, object> dicTiposAsignacion;
+        
         List<object> data;
         List<double> heightData;
         List<bool> dataSelected;
@@ -46,7 +48,7 @@ namespace Gabriel.Cat.XamarinForms
             data = new List<object>();
             heightData = new List<double>();
             svMain.Scrolled += SetPosition;
-
+            dicTiposAsignacion = new SortedList<string, object>();
             actualIndex = 0;
             tapView = new TapGestureRecognizer();
             tapView.Tapped += (s, e) =>
@@ -77,6 +79,9 @@ namespace Gabriel.Cat.XamarinForms
                     UnSelectedItemEvent(data[indexObj]);
                 }
             };
+
+
+            dicTiposAsignacion.Add(typeof(string).Name, "size");
         }
 
         private void SetSize(object sender, EventArgs e)
@@ -132,11 +137,13 @@ namespace Gabriel.Cat.XamarinForms
                 throw new ArgumentException(string.Format("the {0} most inhert from {1}", interficieDataType.AssemblyQualifiedName, nameof(View)));
             for (int i = 0; i < propertiesInterficie.Length; i++)
             {
-                if (dataObjectType.GetProperty(propertiesInterficie[i].Value) == null)
-                    throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {3}", propertiesInterficie[i].Value, i, dataObjectType.AssemblyQualifiedName));
-                if (interficieDataType.GetProperty(propertiesInterficie[i].Key) == null)
-                    throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {3}", propertiesInterficie[i].Key, i, interficieDataType.AssemblyQualifiedName));
-
+                if (!dicTiposAsignacion.ContainsKey(dataObjectType.Name))
+                {
+                    if (dataObjectType.GetProperty(propertiesInterficie[i].Value) == null)
+                        throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {2}", propertiesInterficie[i].Value, i, dataObjectType.AssemblyQualifiedName));
+                    if (interficieDataType.GetProperty(propertiesInterficie[i].Key) == null)
+                        throw new ArgumentException(String.Format("property {0} at position {1} doesn't exist on {2}", propertiesInterficie[i].Key, i, interficieDataType.AssemblyQualifiedName));
+                }
             }
             if (!dicDataInterficie.ContainsKey(dataObjectType.AssemblyQualifiedName))
             {
@@ -145,6 +152,7 @@ namespace Gabriel.Cat.XamarinForms
                 dicInterficieView.Add(interficieDataType.AssemblyQualifiedName, new List<View>());
                 dicPropertiesView.Add(interficieDataType.AssemblyQualifiedName, new List<KeyValuePair<string, string>>());
                 dicImplementsISlectedItem.Add(interficieDataType.AssemblyQualifiedName, interficieDataType.ImplementInterficie(typeof(ISelectedItem)));
+                dicPropertiesView[interficieDataType.AssemblyQualifiedName].AddRange(propertiesInterficie);
                 if (heightIsVariable)
                     dicHeightInterficies.Add(interficieDataType.AssemblyQualifiedName, -1);
                 else
@@ -152,11 +160,14 @@ namespace Gabriel.Cat.XamarinForms
                     dicHeightInterficies.Add(interficieDataType.AssemblyQualifiedName, GetHeight(interficieDataType, dataObjectType));
                 }
             }
-            dicPropertiesView[interficieDataType.AssemblyQualifiedName].AddRange(propertiesInterficie.Except(dicPropertiesView[interficieDataType.AssemblyQualifiedName]));
+            else
+            {
+                dicPropertiesView[interficieDataType.AssemblyQualifiedName].AddRange(propertiesInterficie.Except(dicPropertiesView[interficieDataType.AssemblyQualifiedName]));
+            }
         }
         double GetHeight(Type interficieType, Type dataType)
         {
-            return GetHeight(interficieType, Activator.CreateInstance(dataType));
+            return GetHeight(interficieType,dicTiposAsignacion.ContainsKey(dataType.Name)? dicTiposAsignacion[dataType.Name] : Activator.CreateInstance(dataType));
         }
         double GetHeight(Type interficieType, object objDataTest)
         {
@@ -356,7 +367,8 @@ namespace Gabriel.Cat.XamarinForms
         private void SetDataView(object data, View view)
         {
             Type type = view.GetType();
-            List<KeyValuePair<string, string>> properties = dicPropertiesView.ContainsKey(type.AssemblyQualifiedName) ? dicPropertiesView[type.AssemblyQualifiedName] : StaticTypeDefinition.dicPropertiesView[type.AssemblyQualifiedName];
+            List<KeyValuePair<string, string>> properties;
+            properties= dicPropertiesView.ContainsKey(type.AssemblyQualifiedName) ? dicPropertiesView[type.AssemblyQualifiedName] : StaticTypeDefinition.dicPropertiesView[type.AssemblyQualifiedName];
             for (int i = 0; i < properties.Count; i++)
                 data.SetProperty(properties[i].Value, view.GetProperty(properties[i].Key));
         }
@@ -407,11 +419,18 @@ namespace Gabriel.Cat.XamarinForms
             Type typeObj = objData.GetType();
             Type typeView = view.GetType();
             string typeInterficie = dicDataInterficie.ContainsKey(typeObj.AssemblyQualifiedName) ? dicDataInterficie[typeObj.AssemblyQualifiedName] : StaticTypeDefinition.dicDataInterficie[typeObj.AssemblyQualifiedName];
-            List<KeyValuePair<string, string>> propertiesView = dicPropertiesView.ContainsKey(typeObj.AssemblyQualifiedName) ? dicPropertiesView[typeInterficie] : StaticTypeDefinition.dicPropertiesView[typeInterficie];
+            List<KeyValuePair<string, string>> propertiesView = dicPropertiesView.ContainsKey(typeView.AssemblyQualifiedName) ? dicPropertiesView[typeInterficie] : StaticTypeDefinition.dicPropertiesView[typeInterficie];
             ISelectedItem selectedItem;
-            for (int i = 0; i < propertiesView.Count; i++)
+            if (dicTiposAsignacion.ContainsKey(objData.GetType().Name))
             {
-                view.SetProperty(propertiesView[i].Key, objData.GetProperty(propertiesView[i].Value));
+                view.SetProperty(propertiesView[0].Key, objData);
+            }
+            else
+            {
+                for (int i = 0; i < propertiesView.Count; i++)
+                {
+                    view.SetProperty(propertiesView[i].Key, objData.GetProperty(propertiesView[i].Value));
+                }
             }
             if ((dicImplementsISlectedItem.ContainsKey(typeView.AssemblyQualifiedName) ? dicImplementsISlectedItem[typeView.AssemblyQualifiedName] : StaticTypeDefinition.dicImplementsISlectedItem[typeView.AssemblyQualifiedName]) && data.Count > 0)
             {

@@ -15,8 +15,10 @@ namespace Gabriel.Cat.XamarinForms
 		public PageTest ()
 		{
 			InitializeComponent();
-            for (int i = 0; i < 10; i++)
-                stkMain.Children.Add(new RadioButton() { Text="RadioButton"+i});
+            opMain.AddType(typeof(string), typeof(RadioButton), false,RadioButton.TextProperty);
+            for (int i = 0; i < 100; i++)
+                opMain.Add("RadioButton"+i);
+            opMain.Refresh();
         }
 	}
 }
